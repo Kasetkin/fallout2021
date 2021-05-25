@@ -26,21 +26,17 @@ int32_t readByteAsInt(char address) {
 
 
 int32_t readInt(char address) {
-
   int32_t a = readByteAsInt(address);
   int32_t b = readByteAsInt(address);
   int32_t c = readByteAsInt(address);
   int32_t d = readByteAsInt(address);
 
-//  Serial.print("a ");
-//  Serial.println(a);
-//  Serial.print("b ");
-//  Serial.println(b);
-//  Serial.print("c ");
-//  Serial.println(c);
-//  Serial.print("d ");
-//  Serial.println(d);
 
+  Serial.println("Read 4 bytes int");
+  Serial.println(a);
+  Serial.println(b);
+  Serial.println(c);
+  Serial.println(d);
   
   return a | (b << 8) | (c << 16) | (d << 24);
 }
