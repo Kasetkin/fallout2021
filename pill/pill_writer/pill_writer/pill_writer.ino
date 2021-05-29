@@ -4,15 +4,44 @@ const uint8_t PILL_ADDRESS = 80;
 const uint8_t ONE_BYTE_SIZE = 1;
 
 /// different pill types
-const int PILL_ENUMERATOR = 1;
-const int PILL_HEAL_POISON = 9;
-const int PILL_DRUG = 10;
+enum PlayerSignals {
+TICK_SEC_SIG = 4,
+
+RAD_RCVD_SIG,
+HEAL_SIG,
+
+TIME_TICK_1S_SIG,
+TIME_TICK_10S_SIG,
+TIME_TICK_1M_SIG,
+
+PILL_ANY_SIG,
+PILL_HEAL_SIG,
+PILL_HEALSTATION_SIG,
+PILL_BLESS_SIG,
+PILL_CURSE_SIG,
+PILL_ANTIRAD_SIG,
+PILL_RAD_X_SIG,
+PILL_GHOUL_SIG,
+PILL_GHOUL_REMOVED_SIG,
+PILL_REMOVED_SIG,
+PILL_RESET_SIG,
+PILL_TEST_SIG,
+
+AGONY_SIG,
+IMMUNE_SIG,
+NOT_IMMUNE_SIG,
+BLESSED_SIG,
+
+LAST_USER_SIG,
+
+PILL_DIAGNOSTIC = 1001
+};
 
 
-const int32_t PILL_TYPE_TO_CREATE = 12;
+const int32_t PILL_TYPE_TO_CREATE = PILL_DIAGNOSTIC;
 const int32_t DOSE_AFTER = 0;
-const int32_t CHARGE_COUNT = 100;
-const int32_t POISON_VALUE = -7200;
+const int32_t CHARGE_COUNT = 0;
+const int32_t POISON_VALUE = 0;
 
 uint16_t cursorAddress = 0;
 
@@ -76,6 +105,16 @@ void writeNextInt32(int32_t value) {
   writeInt32AsByte(d);    
 }
 
+void updateNextInt32(int32_t newValue) {
+  uint16_t cursorBackup = cursorAddress;
+  int32_t oldValue = readNextInt32();
+  if (oldValue == newValue)
+    return;
+
+  cursorAddress = cursorBackup;
+  writeNextInt32(newValue);
+}
+
 void resetCursorToZero() {
   cursorAddress = 0;
 }
@@ -85,7 +124,6 @@ void resetCursorToZero() {
 void setup() {
   Serial.begin(115200); 
   Wire.begin();
-//  toWrite = 111111111;
 }
 
 
@@ -123,15 +161,15 @@ void loop() {
     Serial.print("PILL TYPE : ");
     Serial.println(type, DEC);
 
-//    Serial.println("now overwrite it with new info");
-//    resetCursorToZero();
-//    writeNextInt32(PILL_TYPE_TO_CREATE);
-//    writeNextInt32(DOSE_AFTER);
-//    writeNextInt32(CHARGE_COUNT);
-//    writeNextInt32(POISON_VALUE);  
-//    delay(5000);
-//    
-//    Serial.println("done; read and verify");
+    Serial.println("now overwrite it with new info");
+    resetCursorToZero();
+    updateNextInt32(PILL_TYPE_TO_CREATE);
+    updateNextInt32(DOSE_AFTER);
+    updateNextInt32(CHARGE_COUNT);
+    updateNextInt32(POISON_VALUE);  
+    delay(5000);
+    
+    Serial.println("done; read and verify");
     
     resetCursorToZero();
     int32_t someType = readNextInt32();
