@@ -1,0 +1,3 @@
+[submodule "chibi-armlet"]
+	path = chibi-armlet
+	url = ../chibi-armlet.git
