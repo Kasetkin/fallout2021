@@ -1,68 +1,94 @@
 #include <Wire.h>
 
-void setup() {
-  Wire.begin();
+const uint8_t PILL_ADDRESS = 80;
+const uint8_t ONE_BYTE_SIZE = 1;
 
-  Serial.begin(9600);
-  while (!Serial); // Leonardo: wait for serial monitor
-  Serial.println("I2C Pill Reader");
-}
+uint16_t cursorAddress = 0;
 
-const int PILL_ADDRESS = 80;
+int32_t readByteAsInt32() {
+  int32_t rdata = 0xFF;
+ 
+  Wire.beginTransmission(PILL_ADDRESS);
+  Wire.write((int)(cursorAddress & 0xFF)); // LSB
+  Wire.endTransmission();
 
-/// different pill types
-const int PILL_ENUMERATOR = 1;
-const int PILL_HEAL_POISON = 9;
-const int PILL_DRUG = 10;
-
-int32_t readByteAsInt(char address) {
-  Wire.requestFrom(address, 1);
-
-  if (Wire.available())
-    return Wire.read();
-  else
-    return -1;  
-}
-
-
-int32_t readInt(char address) {
-  int32_t a = readByteAsInt(address);
-  int32_t b = readByteAsInt(address);
-  int32_t c = readByteAsInt(address);
-  int32_t d = readByteAsInt(address);
-
-
-  Serial.println("Read 4 bytes int");
-  Serial.println(a);
-  Serial.println(b);
-  Serial.println(c);
-  Serial.println(d);
+  Wire.requestFrom(PILL_ADDRESS, ONE_BYTE_SIZE);
+ 
+  if (Wire.available()) {
+    rdata = Wire.read();
+    ++cursorAddress;
+  }
   
+  return rdata;  
+}
+
+
+int32_t readNextInt32() {
+  int32_t a = readByteAsInt32();
+  int32_t b = readByteAsInt32();
+  int32_t c = readByteAsInt32();
+  int32_t d = readByteAsInt32();
   return a | (b << 8) | (c << 16) | (d << 24);
 }
 
+void resetCursorToZero() {
+  cursorAddress = 0;
+}
+
+void setup() {
+  Serial.begin(115200); 
+  Wire.begin();
+}
+
+bool pillConnected = false;
+
 void loop() {
-  Serial.println("-----------------");
-
-  /// reset address from where we read data
-  Wire.beginTransmission(PILL_ADDRESS);
-  Wire.write(0);
-  Wire.endTransmission();
+  resetCursorToZero(); 
+  int32_t type = readNextInt32();
   
-  int32_t type = readInt(PILL_ADDRESS);  
-  if (type == -1) {
-    Serial.println("no pill");
+  if (pillConnected == true && type == -1){
+    // if pill was connected and now it's not
+    
+    pillConnected = false;
+    Serial.println();
+    Serial.println("No pill connected.");
+    
+  } else if (pillConnected == false && type != -1) {
+    // if pill wasn't connected and now it is
+    
+    pillConnected = true;
+    
+    resetCursorToZero();
+    
+    int32_t someType = readNextInt32();
+    Serial.println();
+    Serial.print("TYPE: ");
+    Serial.println(someType);
+
+    int32_t someDose = readNextInt32();
+    Serial.print("DOSE AFTER: ");
+    Serial.println(someDose);
+
+    int32_t someChargeCount = readNextInt32();
+    Serial.print("CHARGE COUNT: ");
+    Serial.println(someChargeCount);
+
+    int32_t someValue = readNextInt32();
+    Serial.print("VALUE: ");
+    Serial.println(someValue);
+    
+    Serial.println("CSV copy-paste:");
+    Serial.print(someType);
+    Serial.print(",NO COLOR,"); // pill color, manual entry
+    Serial.print(someDose);
+    Serial.print(",");
+    Serial.print(someChargeCount);
+    Serial.print(",");
+    Serial.print(someValue);
+    Serial.println(",");
   } else {
-    Serial.print("PILL TYPE : ");
-    Serial.println(type, DEC);
+    Serial.print("#");
   }
-  
-//  switch (type) {
-//  }
-//  Serial.print("field 1 = ");
-//  Serial.println(fieldA, DEC);
-//  Serial.print("field 2 = ");
-//  Serial.println(fieldB, DEC);
 
-  delay(1000); // Wait 5 seconds for next scan
+  delay(1000);
 }
