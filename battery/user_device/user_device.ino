@@ -6,7 +6,7 @@ LiquidCrystal_PCF8574 lcd(0x27); // set the LCD address to 0x27 for a 16 chars a
 int POWER_DRAIN_PIN = A0; // configure drain speed
 int POWER_SHITCH_PIN = 2;
 //int BATTERY_CHECK_PIN = 3; // do not really need it, just check i2c answer
-int OUTPUT_220V_RELAY_PIN = 12;
+int OUTPUT_220V_RELAY_PIN = 6;
 int BAD_BATTERY_LED_PIN = 4;
 int GOOD_BATTERY_LED_PIN = 5;
 
