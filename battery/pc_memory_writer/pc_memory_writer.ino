@@ -1,59 +1,19 @@
 #include <Wire.h>
 
-const uint8_t PILL_ADDRESS = 80;
+const uint8_t BATTERY_ADDRESS = 80;
 const uint8_t ONE_BYTE_SIZE = 1;
-
-/// different pill types
-enum PlayerSignals {
-TICK_SEC_SIG = 4,
-
-RAD_RCVD_SIG,
-HEAL_SIG,
-
-TIME_TICK_1S_SIG,
-TIME_TICK_10S_SIG,
-TIME_TICK_1M_SIG,
-
-PILL_ANY_SIG,
-PILL_HEAL_SIG,
-PILL_HEALSTATION_SIG,
-PILL_BLESS_SIG,
-PILL_CURSE_SIG,
-PILL_ANTIRAD_SIG,
-PILL_RAD_X_SIG,
-PILL_GHOUL_SIG,
-PILL_GHOUL_REMOVED_SIG,
-PILL_REMOVED_SIG,
-PILL_RESET_SIG,
-PILL_TEST_SIG,
-
-AGONY_SIG,
-IMMUNE_SIG,
-NOT_IMMUNE_SIG,
-BLESSED_SIG,
-
-LAST_USER_SIG,
-
-PILL_DIAGNOSTIC = 1001
-};
-
-
-const int32_t PILL_TYPE_TO_CREATE = PILL_DIAGNOSTIC;
-const int32_t DOSE_AFTER = 0;
-const int32_t CHARGE_COUNT = 0;
-const int32_t POISON_VALUE = 0;
-
+uint16_t BATTERY_CURSOR = 21; // for 2021 year, change it to 22 in 2022
 uint16_t cursorAddress = 0;
 
 int32_t readByteAsInt32() {
   int32_t rdata = 0xFF;
  
-  Wire.beginTransmission(PILL_ADDRESS);
+  Wire.beginTransmission(BATTERY_ADDRESS);
   //Wire.write((int)(cursorAddress >> 8));   // MSB
   Wire.write((int)(cursorAddress & 0xFF)); // LSB
   Wire.endTransmission();
 
-  Wire.requestFrom(PILL_ADDRESS, ONE_BYTE_SIZE);
+  Wire.requestFrom(BATTERY_ADDRESS, ONE_BYTE_SIZE);
  
   if (Wire.available()) {
     rdata = Wire.read();
@@ -72,7 +32,7 @@ void writeInt32AsByte(int32_t value) {
   Serial.println(cursorAddress);
 
   //i2ceeprom.write8(cursorAddress, value);
-  Wire.beginTransmission(PILL_ADDRESS);
+  Wire.beginTransmission(BATTERY_ADDRESS);
   //Wire.write((int)(cursorAddress >> 8));   // MSB
   Wire.write((int)(cursorAddress & 0xFF)); // LSB
   Wire.write(value);
@@ -93,7 +53,6 @@ int32_t readNextInt32() {
 }
 
 void writeNextInt32(int32_t value) {
-  //Wire.beginTransmission(PILL_ADDRESS);  
   int32_t a = value & 0xFF;
   int32_t b = (value >> 8) & 0xFF;
   int32_t c = (value >> 16) & 0xFF;
@@ -105,25 +64,37 @@ void writeNextInt32(int32_t value) {
   writeInt32AsByte(d);    
 }
 
-void updateNextInt32(int32_t newValue) {
-  uint16_t cursorBackup = cursorAddress;
-  Serial.println("try to re-write value");
-  int32_t oldValue = readNextInt32();
-  Serial.print("old value = ");
-  Serial.println(oldValue);
-  
-  if (oldValue == newValue) {
-    Serial.println("nothing to do, skip");
-    return;
-  }
-    
+bool testBatteryMemory() {
+  Wire.begin();
+  Wire.beginTransmission(BATTERY_ADDRESS);
+  int error = Wire.endTransmission();
+  Serial.print("Error: ");
+  Serial.print(error);
 
-  cursorAddress = cursorBackup;
-  writeNextInt32(newValue);
+  if (error == 0) {
+    Serial.println(": battery OK");
+    return true;
+  } else {
+    Serial.println(": battery not found.");
+    return false;
+  }
 }
 
-void resetCursorToBatteryValue() {
-  cursorAddress = 21; // for 2021 fallout
+
+int32_t readBatteryValue() {
+  cursorAddress = BATTERY_CURSOR;
+  int32_t value = readNextInt32();
+  return value;
+}
+
+void updateBatteryValue(int32_t newValue) {
+  cursorAddress = BATTERY_CURSOR;
+  int32_t oldValue = readNextInt32();
+  if (oldValue == newValue)
+    return;
+
+  cursorAddress = BATTERY_CURSOR;
+  writeNextInt32(newValue);
 }
 
 void setup() {
@@ -133,9 +104,16 @@ void setup() {
 
 
 void loop() {
+  Serial.println("test I2C memory");
+  bool batteryMemoryStatus = testBatteryMemory();
+  if (not batteryMemoryStatus) {
+    Serial.println("no battery #103");
+    delay(500);
+    return;
+  }
+
   Serial.println("write BATTERY charge value as Int32");
-  resetCursorToBatteryValue();
-  updateNextInt32(12000000);
+  updateBatteryValue(12000000);
     
   delay(1000);
 }
