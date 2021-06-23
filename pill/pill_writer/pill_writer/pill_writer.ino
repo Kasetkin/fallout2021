@@ -3,45 +3,22 @@
 const uint8_t PILL_ADDRESS = 80;
 const uint8_t ONE_BYTE_SIZE = 1;
 
-/// different pill types
-enum PlayerSignals {
-TICK_SEC_SIG = 4,
 
-RAD_RCVD_SIG,
-HEAL_SIG,
-
-TIME_TICK_1S_SIG,
-TIME_TICK_10S_SIG,
-TIME_TICK_1M_SIG,
-
-PILL_ANY_SIG,
-PILL_HEAL_SIG,
-PILL_HEALSTATION_SIG,
-PILL_BLESS_SIG,
-PILL_CURSE_SIG,
-PILL_ANTIRAD_SIG,
-PILL_RAD_X_SIG,
-PILL_GHOUL_SIG,
-PILL_GHOUL_REMOVED_SIG,
-PILL_REMOVED_SIG,
-PILL_RESET_SIG,
-PILL_TEST_SIG,
-
-AGONY_SIG,
-IMMUNE_SIG,
-NOT_IMMUNE_SIG,
-BLESSED_SIG,
-
-LAST_USER_SIG,
-
-PILL_DIAGNOSTIC = 1001
-};
+const int32_t PILL_DIAGNOSTIC = 1001;
+const int32_t PILL_RESET = 0;
+const int32_t PILL_ANTIRAD = 1;
+const int32_t PILL_RAD_X = 2;
+const int32_t PILL_HEAL = 3;
+const int32_t PILL_HEALSTATION = 4;
+const int32_t PILL_BLESS = 5;
+const int32_t PILL_CURSE = 6;
+const int32_t PILL_GHOUL = 7;
 
 
-const int32_t PILL_TYPE_TO_CREATE = PILL_DIAGNOSTIC;
-const int32_t DOSE_AFTER = 0;
-const int32_t CHARGE_COUNT = 0;
-const int32_t POISON_VALUE = 0;
+const int32_t PILL_TYPE_TO_CREATE = PILL_GHOUL;
+const int32_t VALUE_1 = 0; // DOSE_AFTER
+const int32_t VALUE_2 = 0; // CHARGE_COUNT
+const int32_t VALUE_3 = 0; // POISON_VALUE ?
 
 uint16_t cursorAddress = 0;
 
@@ -49,7 +26,6 @@ int32_t readByteAsInt32() {
   int32_t rdata = 0xFF;
  
   Wire.beginTransmission(PILL_ADDRESS);
-  //Wire.write((int)(cursorAddress >> 8));   // MSB
   Wire.write((int)(cursorAddress & 0xFF)); // LSB
   Wire.endTransmission();
 
@@ -71,9 +47,7 @@ void writeInt32AsByte(int32_t value) {
   Serial.print(" to the address ");
   Serial.println(cursorAddress);
 
-  //i2ceeprom.write8(cursorAddress, value);
   Wire.beginTransmission(PILL_ADDRESS);
-  //Wire.write((int)(cursorAddress >> 8));   // MSB
   Wire.write((int)(cursorAddress & 0xFF)); // LSB
   Wire.write(value);
   Wire.endTransmission();
@@ -119,41 +93,14 @@ void resetCursorToZero() {
   cursorAddress = 0;
 }
 
-//int32_t toWrite = 0;
-
 void setup() {
   Serial.begin(115200); 
   Wire.begin();
 }
 
-
-//void loop0() {
-//  Serial.println("-----------------");
-//  
-////  if (i2ceeprom.begin(PILL_ADDRESS)) {
-////    Serial.println("found PILL");
-////  } else {
-////    Serial.println("I2C EEPROM not identified ... check your connections?\r\n");
-////    delay(1000);    
-////    return;
-////  }  
-//
-//  resetCursorToZero();
-//  int32_t type = readNextInt32();
-//  Serial.print("PILL TYPE : ");
-//  Serial.println(type, DEC);
-//
-//  Serial.print("try to write new value ");
-//  Serial.println(toWrite);
-//  resetCursorToZero();
-//  writeNextInt32(toWrite);
-//
-//  ++toWrite;
-//  delay(5000);
-//}
-
 void loop() {
   resetCursorToZero(); 
+  
   int32_t type = readNextInt32();  
   if (type == -1) {
     Serial.println("no pill");
@@ -164,9 +111,9 @@ void loop() {
     Serial.println("now overwrite it with new info");
     resetCursorToZero();
     updateNextInt32(PILL_TYPE_TO_CREATE);
-    updateNextInt32(DOSE_AFTER);
-    updateNextInt32(CHARGE_COUNT);
-    updateNextInt32(POISON_VALUE);  
+    updateNextInt32(VALUE_1);
+    updateNextInt32(VALUE_2);
+    updateNextInt32(VALUE_3);  
     delay(5000);
     
     Serial.println("done; read and verify");
@@ -181,7 +128,7 @@ void loop() {
     }
 
     int32_t someDose = readNextInt32();
-    if (someDose != DOSE_AFTER) {      
+    if (someDose != VALUE_1) {      
       Serial.print("verification fail, incorrect DoseAfter ");
       Serial.println(someDose);
     } else {
@@ -189,7 +136,7 @@ void loop() {
     }
 
     int32_t someChargeCount = readNextInt32();
-    if (someChargeCount != CHARGE_COUNT) {
+    if (someChargeCount != VALUE_2) {
       Serial.print("verification fail, incorrect ChargeCnt ");
       Serial.println(someChargeCount);      
     } else {
@@ -197,7 +144,7 @@ void loop() {
     }
 
     int32_t someValue = readNextInt32();
-    if (someValue != POISON_VALUE) {
+    if (someValue != VALUE_3) {
       Serial.print("verification fail, incorrect Value ");
       Serial.println(someValue);      
     } else {
