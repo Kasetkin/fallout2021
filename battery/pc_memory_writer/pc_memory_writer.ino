@@ -1,5 +1,8 @@
 #include <Wire.h>
 
+const int32_t BATTERY_POWER_VALUE = int32_t(300) * int32_t(60) * 120;
+
+const int GOOD_STATE_LED = 5;
 const uint8_t BATTERY_ADDRESS = 80;
 const uint8_t ONE_BYTE_SIZE = 1;
 uint16_t BATTERY_CURSOR = 21; // for 2021 year, change it to 22 in 2022
@@ -90,8 +93,10 @@ int32_t readBatteryValue() {
 void updateBatteryValue(int32_t newValue) {
   cursorAddress = BATTERY_CURSOR;
   int32_t oldValue = readNextInt32();
-  if (oldValue == newValue)
+  if (oldValue == newValue) {
+    Serial.println("same value, skip");
     return;
+  }
 
   cursorAddress = BATTERY_CURSOR;
   writeNextInt32(newValue);
@@ -100,20 +105,25 @@ void updateBatteryValue(int32_t newValue) {
 void setup() {
   Serial.begin(115200); 
   Wire.begin();
+  pinMode(GOOD_STATE_LED, OUTPUT);
 }
 
 
 void loop() {
+  digitalWrite(GOOD_STATE_LED, LOW);
+  
   Serial.println("test I2C memory");
   bool batteryMemoryStatus = testBatteryMemory();
   if (not batteryMemoryStatus) {
     Serial.println("no battery #103");
-    delay(500);
+    delay(100);
     return;
   }
 
-  Serial.println("write BATTERY charge value as Int32");
-  updateBatteryValue(12000000);
-    
-  delay(1000);
+  Serial.println("write BATTERY charge value ");
+  Serial.println(BATTERY_POWER_VALUE);
+  updateBatteryValue(BATTERY_POWER_VALUE);
+  
+  digitalWrite(GOOD_STATE_LED, HIGH);
+  delay(100);
 }
