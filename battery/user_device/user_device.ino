@@ -3,23 +3,20 @@
 
 LiquidCrystal_PCF8574 lcd(0x27); // set the LCD address to 0x27 for a 16 chars and 2 line display
 
-int POWER_DRAIN_PIN = A0; // configure drain speed
-int POWER_SHITCH_PIN = 2;
+//int POWER_DRAIN_PIN = A0; // configure drain speed
+const int POWER_SHITCH_PIN = 2;
 //int BATTERY_CHECK_PIN = 3; // do not really need it, just check i2c answer
-int OUTPUT_220V_RELAY_PIN = 6;
-int BAD_BATTERY_LED_PIN = 4;
-int GOOD_BATTERY_LED_PIN = 5;
+const int OUTPUT_220V_RELAY_PIN = 6;
+const int BAD_BATTERY_LED_PIN = 4;
+const int GOOD_BATTERY_LED_PIN = 5;
 
-int32_t PERIOD_MS = 1000;
+const int32_t PERIOD_MS = 1000;
 
-int32_t MIN_DRAIN_VALUE = 100;
-int32_t MAX_DRAIN_VALUE = 10000;
+const int32_t DRAIN_VALUE_PA =     300;
+const int32_t DRAIN_VALUE_MOTO =   200;
+const int32_t DRAIN_VALUE_Light =  100;
 
-int32_t MAX_DRAIN_PER_SEC = MAX_DRAIN_VALUE * int32_t(1000) / PERIOD_MS;
-int32_t MAX_DRAIN_PER_MINUTE = 60 * MAX_DRAIN_PER_SEC;
-
-/// PowerArmor should work ~20 minutes, it's our max drain_value
-int32_t MAX_POWER = 20 * MAX_DRAIN_PER_MINUTE;
+const int32_t MAX_POWER = DRAIN_VALUE_PA * 60 * 120;
 
 //------------------------ PILL / BATTERY ------------------------
 const uint8_t BATTERY_ADDRESS = 80;
@@ -106,20 +103,21 @@ void printRemainingTime(int32_t power, int32_t drainPerSecond) {
 }
 
 int32_t readDrainValue() {
-  int analogValue = analogRead(POWER_DRAIN_PIN);
-
-  Serial.print("analog drain value: ");
-  Serial.println(analogValue);
-  
-  int32_t drainPerStep = MIN_DRAIN_VALUE + int32_t(analogValue) * (MAX_DRAIN_VALUE - MIN_DRAIN_VALUE) / int32_t(1024);
-  
-  if (drainPerStep < PERIOD_MS / 1000)
-    drainPerStep = PERIOD_MS / 1000; // because drain per sec should be positive
-    
-  Serial.print("drain step value: ");
-  Serial.println(drainPerStep);
-
-  return drainPerStep;
+//  int analogValue = analogRead(POWER_DRAIN_PIN);
+//
+//  Serial.print("analog drain value: ");
+//  Serial.println(analogValue);
+//  
+//  int32_t drainPerStep = MIN_DRAIN_VALUE + int32_t(analogValue) * (MAX_DRAIN_VALUE - MIN_DRAIN_VALUE) / int32_t(1024);
+//  
+//  if (drainPerStep < PERIOD_MS / 1000)
+//    drainPerStep = PERIOD_MS / 1000; // because drain per sec should be positive
+//    
+//  Serial.print("drain step value: ");
+//  Serial.println(drainPerStep);
+//
+//  return drainPerStep;
+  return DRAIN_VALUE_PA;
 }
 
 int32_t calcDrainPerSecond(int32_t perStep) {
