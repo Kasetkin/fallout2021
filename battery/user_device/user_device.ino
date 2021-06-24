@@ -13,6 +13,7 @@ const int GOOD_BATTERY_LED_PIN = 5;
 const int32_t PERIOD_MS = 1000;
 
 const int32_t DRAIN_VALUE_PA =     300;
+const int32_t DRAIN_VALUE_PA_UPGRADE =     200;
 const int32_t DRAIN_VALUE_MOTO =   200;
 const int32_t DRAIN_VALUE_Light =  100;
 
@@ -111,23 +112,9 @@ void printRemainingTime(int32_t power, int32_t drainPerSecond) {
   print2charsInt(seconds);
   lcd.print("sec");
 }
-
+//-----------------------------------------------------------------------------------------------------------------------
 int32_t readDrainValue() {
-//  int analogValue = analogRead(POWER_DRAIN_PIN);
-//
-//  Serial.print("analog drain value: ");
-//  Serial.println(analogValue);
-//  
-//  int32_t drainPerStep = MIN_DRAIN_VALUE + int32_t(analogValue) * (MAX_DRAIN_VALUE - MIN_DRAIN_VALUE) / int32_t(1024);
-//  
-//  if (drainPerStep < PERIOD_MS / 1000)
-//    drainPerStep = PERIOD_MS / 1000; // because drain per sec should be positive
-//    
-//  Serial.print("drain step value: ");
-//  Serial.println(drainPerStep);
-//
-//  return drainPerStep;
-  return DRAIN_VALUE_PA;
+  return DRAIN_VALUE_PA_UPGRADE;
 }
 
 int32_t calcDrainPerSecond(int32_t perStep) {
