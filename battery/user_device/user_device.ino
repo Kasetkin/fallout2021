@@ -55,23 +55,33 @@ void print8charsInt(int32_t x) {
 }
 
 void print4charsInt(int32_t x) {
-  /// TODO: add cursor positioning;
   char digits[5] = {0, 0, 0, 0, 0};
   int32_t value = x % 10000;
-
-//  Serial.print("4 digit value to show");
-//  Serial.println(x);
-
-//  Serial.print("v: ");
-//  Serial.println(value);
   
   snprintf(digits, sizeof(digits), "%04d", value);
   
-//  Serial.print("d: ");
-//  Serial.println(digits);
-
   lcd.print(digits);
 }
+
+void print3charsInt(int32_t x) {
+  char digits[4] = {0, 0, 0, 0};
+  int32_t value = x % 1000;
+  
+  snprintf(digits, sizeof(digits), "%03d", value);
+  
+  lcd.print(digits);
+}
+
+void print2charsInt(int32_t x) {
+  char digits[3] = {0, 0, 0};
+  int32_t value = x % 100;
+  
+  snprintf(digits, sizeof(digits), "%02d", value);
+  
+  lcd.print(digits);
+}
+
+
 
 void printRemainingPower(int32_t power) {
   lcd.setCursor(0, 0);
@@ -93,12 +103,12 @@ void printRemainingTime(int32_t power, int32_t drainPerSecond) {
 
   Serial.print("minutes ");
   Serial.println(minutes);
-  print4charsInt(minutes);
+  print3charsInt(minutes);
   lcd.print("min  ");
 
   Serial.print("secs: ");
   Serial.println(seconds);
-  print4charsInt(seconds);
+  print2charsInt(seconds);
   lcd.print("sec");
 }
 
@@ -239,11 +249,15 @@ void setup() {
 }
 
 void setupIndication(bool batteryOk) {
+  lcd.setCursor(0, 0);
+  
   if (batteryOk) {
+    lcd.print("POWER    /ON");
     digitalWrite(OUTPUT_220V_RELAY_PIN, HIGH);
     digitalWrite(GOOD_BATTERY_LED_PIN, LOW);
     digitalWrite(BAD_BATTERY_LED_PIN, HIGH);
   } else {
+    lcd.print("POWER OFF/");
     digitalWrite(OUTPUT_220V_RELAY_PIN, LOW);
     digitalWrite(GOOD_BATTERY_LED_PIN, HIGH);
     digitalWrite(BAD_BATTERY_LED_PIN, LOW);
@@ -257,16 +271,7 @@ void loop() {
 
   lcd.clear();
   lcd.setCursor(0, 0);
-
-//  /// check if we have battery 
-//  int batteryStatus = digitalRead(BATTERY_CHECK_PIN);
-//  if (batteryStatus == HIGH) {
-//    lcd.print("no battery #104");
-//    delay(PERIOD_MS);
-//    digitalWrite(OUTPUT_220V_RELAY_PIN, LOW);
-//    return;
-//  }
-
+  
   bool batteryMemoryStatus = testBatteryMemory();
   if (not batteryMemoryStatus) {
     lcd.print("no battery #103");
@@ -291,8 +296,7 @@ void loop() {
     delay(PERIOD_MS);    
   } else if (memoryPower > 0) {
     Serial.println("battery has some power, display");
-    printRemainingPower(memoryPower);
-    printRemainingTime(memoryPower, drainPerSecond);
+//    printRemainingPower(memoryPower);
 
     int powerSwitchState = digitalRead(POWER_SHITCH_PIN);
     if (powerSwitchState == LOW) {            
@@ -309,12 +313,13 @@ void loop() {
       setupIndication(false);
       // nothing      
     }
+
+    printRemainingTime(memoryPower, drainPerSecond);
   } else {
-//    globalPower = -1;
-    lcd.print("empty battery");
-    lcd.setCursor(3, 1);
-    lcd.print("charge it");
     setupIndication(false);
+    lcd.clear();
+    lcd.setCursor(0, 0);
+    lcd.print("empty battery");
   }
   
   delay(PERIOD_MS);
