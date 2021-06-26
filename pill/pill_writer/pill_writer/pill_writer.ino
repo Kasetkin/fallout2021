@@ -82,8 +82,11 @@ void writeNextInt32(int32_t value) {
 void updateNextInt32(int32_t newValue) {
   uint16_t cursorBackup = cursorAddress;
   int32_t oldValue = readNextInt32();
-  if (oldValue == newValue)
+  if (oldValue == newValue) {
+    Serial.println("skip");
     return;
+  }
+    
 
   cursorAddress = cursorBackup;
   writeNextInt32(newValue);
@@ -114,7 +117,7 @@ void loop() {
     updateNextInt32(VALUE_1);
     updateNextInt32(VALUE_2);
     updateNextInt32(VALUE_3);  
-    delay(5000);
+    delay(700);
     
     Serial.println("done; read and verify");
     
